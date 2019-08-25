@@ -1,0 +1,5 @@
+1. Copy this whole directory. (If you're reading this. You did this much at least, you monkey-brained infant.)
+2. Install postgresql if necesary. Install psycopg2 if necessary.
+3. Manually import everything according to pgconfig.sh using pip.
+4. Sally forth?
+5. Take over the world.

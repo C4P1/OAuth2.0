@@ -35,7 +35,7 @@ session = DBSession()
 @app.route('/login')
 def showLogin():
     state = ''.join(random.choice(string.ascii_uppercase + string.digits)
-                    for x in xrange(32))
+                    for x in range(32))
     login_session['state'] = state
     # return "The current session state is %s" % login_session['state']
     return render_template('login.html', STATE=state)
@@ -117,7 +117,7 @@ def gconnect():
     user_id = getUserID(login_session['email'])
     if not user_id:
         user_id = createUser(login_session)
-        login_session['user_id'] = user_id
+    login_session['user_id'] = user_id
 
     output = ''
     output += '<h1>Welcome, '
@@ -143,7 +143,7 @@ def createUser(login_session):
 
 
 def getUserInfo(user_id):
-    user = session.query(User).filter_by(id=user_id).one()
+    user = session.query(User).filter_by(id=user_id).first()
     return user
 
 
@@ -197,6 +197,70 @@ def restaurantMenuJSON(restaurant_id):
     return jsonify(MenuItems=[i.serialize for i in items])
 
 
+# SHOW MAIN PAGE
+@app.route('/')
+def showMainPage():
+        return render_template('login.html')
+
+
+# VIEW ENTIRE CATALOG
+@app.route('/viewcatalog/')
+def viewCatalog():
+    categories = session.query(Restaurant).order_by(asc(Restaurant.name))
+    items = session.query(MenuItem).limit(10).all()
+    return render_template('catalog.html', items=items, categories=categories)
+
+
+# VIEW ENTIRE CATALOG
+@app.route('/viewitem/<int:item_id>')
+def viewItem(item_id):
+    item = session.query(MenuItem).filter_by(id=item_id).one()
+    return render_template('item.html', item=item)
+
+
+# EDIT EXISTING ITEMS
+@app.route('/edit/<int:item_id>/', methods=['GET', 'POST'])
+def editItem(item_id):
+    if 'username' not in login_session:
+        return redirect('/')
+    editedItem = session.query(MenuItem).filter_by(id=item_id).one()
+    if request.method == 'POST':
+        if request.form['name']:
+            editedItem.name = request.form['name']
+        if request.form['description']:
+            editedItem.description = request.form['description']
+        if request.form['category']:
+            editedItem.course = request.form['category']
+        session.add(editedItem)
+        session.commit()
+        flash('Item Successfully Edited')
+        return redirect(url_for('viewCatalog'))
+    else:
+        return render_template('editmenuitem.html', restaurant_id=restaurant_id, menu_id=menu_id, item=editedItem)
+
+
+# Delete a menu item
+@app.route('/restaurant/<int:restaurant_id>/menu/<int:menu_id>/delete', methods=['GET', 'POST'])
+def deleteMenuItem(restaurant_id, menu_id):
+    if 'username' not in login_session:
+        return redirect('/login')
+    restaurant = session.query(Restaurant).filter_by(id=restaurant_id).one()
+    itemToDelete = session.query(MenuItem).filter_by(id=menu_id).one()
+    if request.method == 'POST':
+        session.delete(itemToDelete)
+        session.commit()
+        flash('Menu Item Successfully Deleted')
+        return redirect(url_for('showMenu', restaurant_id=restaurant_id))
+    else:
+        return render_template('deleteMenuItem.html', item=itemToDelete)
+
+
+
+
+
+
+
+
 @app.route('/restaurant/<int:restaurant_id>/menu/<int:menu_id>/JSON')
 def menuItemJSON(restaurant_id, menu_id):
     Menu_Item = session.query(MenuItem).filter_by(id=menu_id).one()
@@ -209,15 +273,7 @@ def restaurantsJSON():
     return jsonify(restaurants=[r.serialize for r in restaurants])
 
 
-# Show all restaurants
-@app.route('/')
-@app.route('/restaurant/')
-def showRestaurants():
-    restaurants = session.query(Restaurant).order_by(asc(Restaurant.name))
-    if 'username' not in login_session:
-        return render_template('publicrestaurants.html', restaurants=restaurants)
-    else:
-        return render_template('restaurants.html', restaurants=restaurants)
+
 
 # Create a new restaurant
 
@@ -269,20 +325,7 @@ def deleteRestaurant(restaurant_id):
     else:
         return render_template('deleteRestaurant.html', restaurant=restaurantToDelete)
 
-# Show a restaurant menu
 
-
-@app.route('/restaurant/<int:restaurant_id>/')
-@app.route('/restaurant/<int:restaurant_id>/menu/')
-def showMenu(restaurant_id):
-    restaurant = session.query(Restaurant).filter_by(id=restaurant_id).one()
-    creator = getUserInfo(restaurant.user_id)
-    items = session.query(MenuItem).filter_by(
-        restaurant_id=restaurant_id).all()
-    if 'username' not in login_session or creator.id != login_session['user_id']:
-        return render_template('publicmenu.html', items=items, restaurant=restaurant)
-    else:
-        return render_template('menu.html', items=items, restaurant=restaurant)
 
 
 # Create a new menu item
@@ -346,4 +389,4 @@ def deleteMenuItem(restaurant_id, menu_id):
 if __name__ == '__main__':
     app.secret_key = 'super_secret_key'
     app.debug = True
-    app.run(host='0.0.0.0', port=5000)
+    app.run(host='0.0.0.0', port=5000, threaded=False)

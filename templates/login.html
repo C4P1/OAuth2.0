@@ -21,8 +21,8 @@
 <body>  
 
 
-<!-- GOOGLE PLUS SIGN IN BUTTON-->
-<button id="signinButton">Google Signin</button>
+<!-- GOOGLE SIGN IN BUTTON-->
+<button class="mainpageButton" id="signinButton">Log In</button>
 <div id="result"></div>
 
           
@@ -37,8 +37,14 @@
             data-approvalprompt="force">
           </span>
         </div>
-
 <!--END GOOGLE PLUS SIGN IN BUTTON -->
+
+<a href="{{url_for('viewCatalog')}}">
+				<button class="mainpageButton" id="catalogButton">View Catalog</button>
+					<span class="glyphicon glyphicon-glass" aria-hidden="true"></span>
+				</button>
+			</a>
+
 
 <script>
   $('#signinButton').click(function() {

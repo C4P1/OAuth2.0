@@ -12,7 +12,7 @@
 	<div class="row banner main">
 		<div class="col-md-1"></div>
 		<div class="col-md-11 padding-none">
-			<h1>Categories</h1>
+			<h1>Welcome to the Catalog</h1>
 		</div>
 	</div>
 
@@ -35,18 +35,43 @@
 		<div class="col-md-10 padding-none">
 			<a href="{{url_for('newRestaurant')}}">
 				<button class="btn btn-default" id="new-restaurant">
-					<span class="glyphicon glyphicon-cutlery" aria-hidden="true"></span>Add Restaurant
+					<span class="glyphicon glyphicon-cutlery" aria-hidden="true"></span>Add Item
+				</button>
+			</a>
+			<br>
+			<br>
+			<span class="glyphicon glyphicon-cutlery" aria-hidden="true"></span>Categories
+		</div>
+		<div class="col-md-1"></div>
+	</div>
+	{% for category in categories %}
+		<a href = "{{url_for('showMainPage', restaurant_id = category.id)}}">
+			<div class="row">
+				<div class="col-md-1"></div>
+					<div class="col-md-10 restaurant-list">
+						<h3>{{category.name}}</h3>
+					</div>
+				<div class="col-md-1"></div>
+			</div>
+		</a>
+	{% endfor %}
+	
+	<div class="row padding-top padding-bottom">
+		<div class="col-md-1"></div>
+		<div class="col-md-10 padding-none">
+					<span class="glyphicon glyphicon-cutlery" aria-hidden="true"></span>Items
 				</button>
 			</a>
 		</div>
 		<div class="col-md-1"></div>
 	</div>
-	{% for category in categories %}
-		<a href = "{{url_for('showMenu', restaurant_id = category.id)}}">
+	
+	{% for item in items %}
+		<a href = "{{url_for('viewItem', item_id=item.id)}}">
 			<div class="row">
 				<div class="col-md-1"></div>
 					<div class="col-md-10 restaurant-list">
-						<h3>{{category.name}}</h3>
+						<h3>{{item.name}} <i>({{item.restaurant.name}})</i></h3>
 					</div>
 				<div class="col-md-1"></div>
 			</div>

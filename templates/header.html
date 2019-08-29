@@ -1,11 +1,13 @@
 <div class="row top-menu">
 	<div class="col-md-6">
-		<a href="{{url_for('showRestaurants')}}">
-			<span class="glyphicon glyphicon-home" aria-hidden="true"></span>Show All Restaurants
+		<a href="{{url_for('viewCatalog')}}">
+			<span class="glyphicon glyphicon-home" aria-hidden="true"></span>Show Full Catalog
 		</a>
 	</div>
 	<div class="col-md-6 text-right">
-					<p>Login Link will go Here </p>
+					<a href="{{url_for('showMainPage')}}">
+			<span class="glyphicon glyphicon-home" aria-hidden="true"></span>Return to Main Page
+		</a>
 		
 	</div>
 </div>

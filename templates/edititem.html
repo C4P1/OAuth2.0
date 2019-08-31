@@ -24,11 +24,11 @@
 					<div class = "radio">
 					<select name="category">
 					{%for category in categories%}
-						{%if category.id == item.category.id%}
-							<option value={{category.id}} seelcted>{{category.name}}</option>
-						{%else%}
+						{% if category.id == item.category.id %}
+							<option value={{category.id}} selected>{{category.name}}</option>
+						{% else %}
 							<option value={{category.id}}>{{category.name}}</option>
-						{%endif%}
+						{% endif %}
 					{%endfor%}
 					</select>
 					</div>

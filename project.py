@@ -1,9 +1,11 @@
+#!/usr/bin/env python3
+
 from flask import Flask, render_template, request, redirect, jsonify, url_for, flash
 
 
-from sqlalchemy import create_engine, asc
+from sqlalchemy import create_engine, asc, desc
 from sqlalchemy.orm import sessionmaker
-from database_setup import Base, Restaurant, MenuItem, User
+from database_setup import Base, Category, Item, User
 
 from flask import session as login_session
 import random
@@ -20,18 +22,17 @@ app = Flask(__name__)
 
 CLIENT_ID = json.loads(
     open('client_secrets.json', 'r').read())['web']['client_id']
-APPLICATION_NAME = "Restaurant Menu Application"
+APPLICATION_NAME = "Item Catalog Project"
 
 
-# Connect to Database and create database session
-engine = create_engine('sqlite:///restaurantmenuwithusers.db')
+engine = create_engine('sqlite:///itemcatalog.db')
 Base.metadata.bind = engine
 
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
 
 
-# Create anti-forgery state token
+# CREATE STATE TOKEN
 @app.route('/login')
 def showLogin():
     state = ''.join(random.choice(string.ascii_uppercase + string.digits)
@@ -110,7 +111,6 @@ def gconnect():
     data = answer.json()
 
     login_session['username'] = data['name']
-    login_session['picture'] = data['picture']
     login_session['email'] = data['email']
 
     # See if a user exists, if it doesn't make a new one
@@ -123,19 +123,16 @@ def gconnect():
     output += '<h1>Welcome, '
     output += login_session['username']
     output += '!</h1>'
-    output += '<img src="'
-    output += login_session['picture']
-    output += ' " style = "width: 300px; height: 300px;border-radius: 150px;-webkit-border-radius: 150px;-moz-border-radius: 150px;"> '
-    flash("you are now logged in as %s" % login_session['username'])
+    flash("Logged in as %s" % login_session['username'])
     print("done!")
     return output
 
-# User Helper Functions
+# USER HELPER FUNCTIONS
 
 
 def createUser(login_session):
     newUser = User(name=login_session['username'], email=login_session[
-                   'email'], picture=login_session['picture'])
+                   'email'])
     session.add(newUser)
     session.commit()
     user = session.query(User).filter_by(email=login_session['email']).one()
@@ -155,7 +152,7 @@ def getUserID(email):
         return None
 
 
-# DISCONNECT - Revoke a current user's token and reset their login_session
+# DISCONNECT AND REVOKE TOKEN
 @app.route('/gdisconnect')
 def gdisconnect():
         # Only disconnect a connected user.
@@ -175,7 +172,6 @@ def gdisconnect():
         del login_session['gplus_id']
         del login_session['username']
         del login_session['email']
-        del login_session['picture']
 
         response = make_response(json.dumps('Successfully disconnected.'), 200)
         response.headers['Content-Type'] = 'application/json'
@@ -188,42 +184,63 @@ def gdisconnect():
         return response
 
 
-# JSON APIs to view Restaurant Information
-@app.route('/restaurant/<int:restaurant_id>/menu/JSON')
-def restaurantMenuJSON(restaurant_id):
-    restaurant = session.query(Restaurant).filter_by(id=restaurant_id).one()
-    items = session.query(MenuItem).filter_by(
-        restaurant_id=restaurant_id).all()
-    return jsonify(MenuItems=[i.serialize for i in items])
-
-
 # SHOW MAIN PAGE
 @app.route('/')
 def showMainPage():
-        return render_template('login.html')
+    state = ''.join(random.choice(string.ascii_uppercase + string.digits)
+                    for x in xrange(32))
+    login_session['state'] = state
+    return render_template('login.html', STATE=state)
 
 
 # VIEW ENTIRE CATALOG
-@app.route('/viewcatalog/')
+@app.route('/catalog/')
 def viewCatalog():
-    categories = session.query(Restaurant).order_by(asc(Restaurant.name))
-    items = session.query(MenuItem).limit(10).all()
+    categories = session.query(Category).order_by(asc(Category.id))
+    items = session.query(Item).order_by(desc(Item.id)).limit(10)
     return render_template('catalog.html', items=items, categories=categories)
 
 
-# VIEW ENTIRE CATALOG
-@app.route('/viewitem/<int:item_id>')
+# VIEW CATEGORY DETAILS
+@app.route('/category/<int:category_id>/')
+def viewCategory(category_id):
+    category = session.query(Category).filter_by(id=category_id).one()
+    items = session.query(Item).filter_by(category_id=category_id).all()
+    return render_template('category.html', category=category, items=items)
+
+
+# VIEW ITEM DETAILS
+@app.route('/item/<int:item_id>/')
 def viewItem(item_id):
-    item = session.query(MenuItem).filter_by(id=item_id).one()
+    item = session.query(Item).filter_by(id=item_id).one()
     return render_template('item.html', item=item)
 
 
+# ADD NEW ITEM
+@app.route('/item/new/', methods=['GET', 'POST'])
+def newItem():
+    if 'username' not in login_session:
+        return redirect('/login')
+    if request.method == 'POST':
+        newItem = Item(name=request.form['name'],
+                       description=request.form['description'],
+                       category_id=request.form['category'],
+                       user_id=login_session['user_id'])
+        session.add(newItem)
+        session.commit()
+        flash('%s added under the %s category' % (newItem.name, newItem.category.name))
+        return redirect(url_for('viewCatalog'))
+    else:
+        categories = session.query(Category).order_by(asc(Category.name))
+        return render_template('newitem.html', categories=categories)
+
+
 # EDIT EXISTING ITEMS
-@app.route('/edit/<int:item_id>/', methods=['GET', 'POST'])
+@app.route('/item/<int:item_id>/edit/', methods=['GET', 'POST'])
 def editItem(item_id):
     if 'username' not in login_session:
         return redirect('/')
-    editedItem = session.query(MenuItem).filter_by(id=item_id).one()
+    editedItem = session.query(Item).filter_by(id=item_id).one()
     if request.method == 'POST':
         if request.form['name']:
             editedItem.name = request.form['name']
@@ -236,154 +253,41 @@ def editItem(item_id):
         flash('Item Successfully Edited')
         return redirect(url_for('viewCatalog'))
     else:
-        return render_template('editmenuitem.html', restaurant_id=restaurant_id, menu_id=menu_id, item=editedItem)
+        categories = session.query(Category).order_by(asc(Category.name))
+        return render_template('edititem.html', item=editedItem, categories=categories)
 
 
-# Delete a menu item
-@app.route('/restaurant/<int:restaurant_id>/menu/<int:menu_id>/delete', methods=['GET', 'POST'])
-def deleteMenuItem(restaurant_id, menu_id):
+# DELETE AN ITEM
+@app.route('/item/<int:item_id>/delete/', methods=['GET', 'POST'])
+def deleteItem(item_id):
     if 'username' not in login_session:
-        return redirect('/login')
-    restaurant = session.query(Restaurant).filter_by(id=restaurant_id).one()
-    itemToDelete = session.query(MenuItem).filter_by(id=menu_id).one()
+        return redirect('/')
+    itemToDelete = session.query(Item).filter_by(id=item_id).one()
     if request.method == 'POST':
         session.delete(itemToDelete)
         session.commit()
-        flash('Menu Item Successfully Deleted')
-        return redirect(url_for('showMenu', restaurant_id=restaurant_id))
+        flash('%s was successfully deleted. Bye bye %s.' %(itemToDelete.name, itemToDelete.name))
+        return redirect(url_for('viewCatalog'))
     else:
-        return render_template('deleteMenuItem.html', item=itemToDelete)
+        return render_template('deleteItem.html', item=itemToDelete)
 
 
+# ENDPOINTS
 
 
+# JSON FOR CATEGORY ITEMS
+@app.route('/category/<int:category_id>/JSON')
+def categoryItemsJSON(category_id):
+    category = session.query(Category).filter_by(id=category_id).one()
+    items = session.query(Item).filter_by(category_id=category_id).all()
+    return jsonify(Items=[i.serialize for i in items])
 
 
-
-
-@app.route('/restaurant/<int:restaurant_id>/menu/<int:menu_id>/JSON')
-def menuItemJSON(restaurant_id, menu_id):
-    Menu_Item = session.query(MenuItem).filter_by(id=menu_id).one()
-    return jsonify(Menu_Item=Menu_Item.serialize)
-
-
-@app.route('/restaurant/JSON')
-def restaurantsJSON():
-    restaurants = session.query(Restaurant).all()
-    return jsonify(restaurants=[r.serialize for r in restaurants])
-
-
-
-
-# Create a new restaurant
-
-
-@app.route('/restaurant/new/', methods=['GET', 'POST'])
-def newRestaurant():
-    if 'username' not in login_session:
-        return redirect('/login')
-    if request.method == 'POST':
-        newRestaurant = Restaurant(
-            name=request.form['name'], user_id=login_session['user_id'])
-        session.add(newRestaurant)
-        flash('New Restaurant %s Successfully Created' % newRestaurant.name)
-        session.commit()
-        return redirect(url_for('showRestaurants'))
-    else:
-        return render_template('newRestaurant.html')
-
-# Edit a restaurant
-
-
-@app.route('/restaurant/<int:restaurant_id>/edit/', methods=['GET', 'POST'])
-def editRestaurant(restaurant_id):
-    if 'username' not in login_session:
-        return redirect('/login')
-    editedRestaurant = session.query(
-        Restaurant).filter_by(id=restaurant_id).one()
-    if request.method == 'POST':
-        if request.form['name']:
-            editedRestaurant.name = request.form['name']
-            flash('Restaurant Successfully Edited %s' % editedRestaurant.name)
-            return redirect(url_for('showRestaurants'))
-    else:
-        return render_template('editRestaurant.html', restaurant=editedRestaurant)
-
-
-# Delete a restaurant
-@app.route('/restaurant/<int:restaurant_id>/delete/', methods=['GET', 'POST'])
-def deleteRestaurant(restaurant_id):
-    if 'username' not in login_session:
-        return redirect('/login')
-    restaurantToDelete = session.query(
-        Restaurant).filter_by(id=restaurant_id).one()
-    if request.method == 'POST':
-        session.delete(restaurantToDelete)
-        flash('%s Successfully Deleted' % restaurantToDelete.name)
-        session.commit()
-        return redirect(url_for('showRestaurants', restaurant_id=restaurant_id))
-    else:
-        return render_template('deleteRestaurant.html', restaurant=restaurantToDelete)
-
-
-
-
-# Create a new menu item
-@app.route('/restaurant/<int:restaurant_id>/menu/new/', methods=['GET', 'POST'])
-def newMenuItem(restaurant_id):
-    if 'username' not in login_session:
-        return redirect('/login')
-    restaurant = session.query(Restaurant).filter_by(id=restaurant_id).one()
-    if request.method == 'POST':
-        newItem = MenuItem(name=request.form['name'], description=request.form['description'], price=request.form[
-                           'price'], course=request.form['course'], restaurant_id=restaurant_id, user_id=restaurant.user_id)
-        session.add(newItem)
-        session.commit()
-        flash('New Menu %s Item Successfully Created' % (newItem.name))
-        return redirect(url_for('showMenu', restaurant_id=restaurant_id))
-    else:
-        return render_template('newmenuitem.html', restaurant_id=restaurant_id)
-
-# Edit a menu item
-
-
-@app.route('/restaurant/<int:restaurant_id>/menu/<int:menu_id>/edit', methods=['GET', 'POST'])
-def editMenuItem(restaurant_id, menu_id):
-    if 'username' not in login_session:
-        return redirect('/login')
-    editedItem = session.query(MenuItem).filter_by(id=menu_id).one()
-    restaurant = session.query(Restaurant).filter_by(id=restaurant_id).one()
-    if request.method == 'POST':
-        if request.form['name']:
-            editedItem.name = request.form['name']
-        if request.form['description']:
-            editedItem.description = request.form['description']
-        if request.form['price']:
-            editedItem.price = request.form['price']
-        if request.form['course']:
-            editedItem.course = request.form['course']
-        session.add(editedItem)
-        session.commit()
-        flash('Menu Item Successfully Edited')
-        return redirect(url_for('showMenu', restaurant_id=restaurant_id))
-    else:
-        return render_template('editmenuitem.html', restaurant_id=restaurant_id, menu_id=menu_id, item=editedItem)
-
-
-# Delete a menu item
-@app.route('/restaurant/<int:restaurant_id>/menu/<int:menu_id>/delete', methods=['GET', 'POST'])
-def deleteMenuItem(restaurant_id, menu_id):
-    if 'username' not in login_session:
-        return redirect('/login')
-    restaurant = session.query(Restaurant).filter_by(id=restaurant_id).one()
-    itemToDelete = session.query(MenuItem).filter_by(id=menu_id).one()
-    if request.method == 'POST':
-        session.delete(itemToDelete)
-        session.commit()
-        flash('Menu Item Successfully Deleted')
-        return redirect(url_for('showMenu', restaurant_id=restaurant_id))
-    else:
-        return render_template('deleteMenuItem.html', item=itemToDelete)
+# JSON FOR ALL ITEMS
+@app.route('/items/JSON')
+def itemsJSON():
+    items = session.query(Item).all()
+    return jsonify(Items=[i.serialize for i in items])
 
 
 if __name__ == '__main__':

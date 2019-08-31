@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html>
 <head>
-
+<link rel="shortcut icon" href="data:image/x-icon;," type="image/x-icon">
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
 <script src="https://apis.google.com/js/client:platform.js?onload=start" async defer></script>
 <script>
   function start() {
     gapi.load('auth2', function() {
       auth2 = gapi.auth2.init({
-        client_id: '1059320406612-t6k3ft12p2i32796k6li8h8mhu4hlafa.apps.googleusercontent.com'
+        client_id: '402191942566-qdkhe0isrn4g2kqcvkrbia610tg5i7og.apps.googleusercontent.com'
       });
     });
   }
@@ -29,7 +29,7 @@
           <div id="signinButton">
           <span class="g-signin"
             data-scope="openid email"
-            data-clientid="1059320406612-t6k3ft12p2i32796k6li8h8mhu4hlafa.apps.googleusercontent.com"
+            data-clientid="402191942566-qdkhe0isrn4g2kqcvkrbia610tg5i7og.apps.googleusercontent.com"
             data-redirecturi="postmessage"
             data-accesstype="offline"
             data-cookiepolicy="single_host_origin"
@@ -61,8 +61,8 @@
           success:function(result){
             $('#result').html('Login Successful!</br>'+ result + '</br>Redirecting...')
                  setTimeout(function() {
-                  window.location.href = "/restaurant";
-                 }, 6000);
+                  window.location.href = "/catalog/";
+                 }, 3000);
           },
           processData:false,
           data:authResult['code']

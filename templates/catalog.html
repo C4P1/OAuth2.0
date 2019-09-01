@@ -23,7 +23,6 @@
     </ul>
         {% endif %}
     {% endwith %}
-
 </div>
 
 	<div class="row padding-top padding-bottom">
@@ -76,7 +75,7 @@
 	{% for item in items %}
 			<a href = "{{url_for('viewItem', item_id=item.id)}}">
 				<div class="col-md-4 item-button">
-					<h3>{{item.name}}<br>({{item.category.name}})</h3>
+					<h3>{{item.name}}</h3><h3>({{item.category.name}})</h3>
 				</div>
 			</a>
 	{% endfor %}

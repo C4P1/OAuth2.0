@@ -1,7 +1,14 @@
 #!/usr/bin/env python3
 
-from flask import Flask, render_template, request, \
-    redirect, jsonify, url_for, flash
+from flask import (
+    Flask,
+    render_template,
+    request,
+    redirect,
+    jsonify,
+    url_for,
+    flash
+)
 
 
 from sqlalchemy import create_engine, asc, desc
@@ -33,18 +40,12 @@ DBSession = sessionmaker(bind=engine)
 session = DBSession()
 
 
-# CREATE STATE TOKEN
-@app.route('/login')
-def showLogin():
-    state = ''.join(random.choice(string.ascii_uppercase + string.digits)
-                    for x in range(32))
-    login_session['state'] = state
-    # return "The current session state is %s" % login_session['state']
-    return render_template('login.html', STATE=state)
-
-
 @app.route('/gconnect', methods=['POST'])
 def gconnect():
+    """
+    Function to authorise the user using the token and check token validity.
+    Also adds token and user details to the session.
+    """
     # Validate state token
     if request.args.get('state') != login_session['state']:
         response = make_response(json.dumps('Invalid state parameter.'), 401)
@@ -129,10 +130,20 @@ def gconnect():
     print("done!")
     return output
 
+
 # USER HELPER FUNCTIONS
 
 
 def createUser(login_session):
+    """
+    Creates a new user in the database.
+
+    Args:
+        login_session: An object with session data
+
+    Returns:
+        user.id: The unique ID associated with the new user in the database.
+    """
     newUser = User(name=login_session['username'], email=login_session[
                    'email'])
     session.add(newUser)
@@ -142,11 +153,29 @@ def createUser(login_session):
 
 
 def getUserInfo(user_id):
+    """
+    Fetches user information from the database.
+
+    Args:
+        user_id: Unique ID for the user.
+
+    Returns:
+        user: Object containing all user data.
+    """
     user = session.query(User).filter_by(id=user_id).first()
     return user
 
 
 def getUserID(email):
+    """
+    Fetches user ID from database based on email provided.
+
+    Args:
+        email: Email of the user to be fetched.
+
+    Returns:
+        user.id: The unique ID associated with the new user in the database.
+    """
     try:
         user = session.query(User).filter_by(email=email).one()
         return user.id
@@ -157,7 +186,10 @@ def getUserID(email):
 # DISCONNECT AND REVOKE TOKEN
 @app.route('/gdisconnect')
 def gdisconnect():
-        # Only disconnect a connected user.
+    """
+    Disconnects the user, revokes the access token and clears session data.
+    """
+    # Only disconnect a connected user.
     access_token = login_session.get('access_token')
     if access_token is None:
         response = make_response(
@@ -169,7 +201,7 @@ def gdisconnect():
     result = h.request(url, 'GET')[0]
 
     if result['status'] == '200':
-        # Reset the user's sesson.
+        # Reset the user's session.
         del login_session['access_token']
         del login_session['gplus_id']
         del login_session['username']
@@ -188,6 +220,9 @@ def gdisconnect():
 # SHOW MAIN PAGE
 @app.route('/')
 def showMainPage():
+    """
+    Creates a randomised state token and shows the front page to the user.
+    """
     state = ''.join(random.choice(string.ascii_uppercase + string.digits)
                     for x in xrange(32))
     login_session['state'] = state
@@ -197,6 +232,9 @@ def showMainPage():
 # VIEW ENTIRE CATALOG
 @app.route('/catalog/')
 def viewCatalog():
+    """
+    Redirects the user to the catalog page.
+    """
     categories = session.query(Category).order_by(asc(Category.id))
     items = session.query(Item).order_by(desc(Item.id)).limit(9)
     return render_template('catalog.html', items=items, categories=categories)
@@ -205,6 +243,15 @@ def viewCatalog():
 # VIEW CATEGORY DETAILS
 @app.route('/category/<int:category_id>/')
 def viewCategory(category_id):
+    """
+    Displays a page containing all items belonging to the same category.
+
+    Args:
+        category_id: ID of the category whose items are to be displayed.
+
+    Returns:
+        A page displaying all items in the category.
+    """
     category = session.query(Category).filter_by(id=category_id).one()
     items = session.query(Item).filter_by(category_id=category_id).all()
     return render_template('category.html', category=category, items=items)
@@ -213,6 +260,15 @@ def viewCategory(category_id):
 # VIEW ITEM DETAILS
 @app.route('/item/<int:item_id>/')
 def viewItem(item_id):
+    """
+    Displays a page containing all details of a specific item.
+
+    Args:
+        item_id: ID of the item whose details are to be displayed.
+
+    Returns:
+        A page displaying all details of the item.
+    """
     item = session.query(Item).filter_by(id=item_id).one()
     return render_template('item.html', item=item)
 
@@ -220,18 +276,32 @@ def viewItem(item_id):
 # ADD NEW ITEM
 @app.route('/item/new/', methods=['GET', 'POST'])
 def newItem():
+    """
+    Adds a new item to the database.
+
+    Returns:
+        On GET: Redirects to a page where the user can enter the details of
+        the new item to be added.
+        On POST: Checks if the item details are valid, then commits them to
+        the database
+        On either: If the user is not logged in, redirects to the main page.
+    """
     if 'username' not in login_session:
-        return redirect('/login')
+        return redirect('/')
     if request.method == 'POST':
-        newItem = Item(name=request.form['name'],
-                       description=request.form['description'],
+        newItem = Item(name=request.form['name'].strip(),
+                       description=request.form['description'].strip(),
                        category_id=request.form['category'],
                        user_id=login_session['user_id'])
-        session.add(newItem)
-        session.commit()
-        flash('%s added under the %s category'
-              % (newItem.name, newItem.category.name))
-        return redirect(url_for('viewCatalog'))
+        if newItem.name == '' or newItem.description == '':
+            flash("Please enter valid details.")
+            return redirect(request.url)
+        else:
+            session.add(newItem)
+            session.commit()
+            flash('%s added under the %s category'
+                  % (newItem.name, newItem.category.name))
+            return redirect(url_for('viewCatalog'))
     else:
         categories = session.query(Category).order_by(asc(Category.name))
         return render_template('newitem.html', categories=categories)
@@ -240,21 +310,44 @@ def newItem():
 # EDIT EXISTING ITEMS
 @app.route('/item/<int:item_id>/edit/', methods=['GET', 'POST'])
 def editItem(item_id):
+    """
+    Edits an existing item.
+
+    Args:
+        item_id: Unique ID of the item to be edited.
+
+    Returns:
+        On GET: Checks if the user has authorisation to edit this item.
+        Redirects to a page where the user can edit the details of
+        the item or flashes an error message accordingly.
+        On POST: Checks if the item details are valid, then commits them to
+        the database
+        On either: If the user is not logged in, redirects to the main page.
+    """
     if 'username' not in login_session:
         return redirect('/')
     editedItem = session.query(Item).filter_by(id=item_id).one()
+
     if request.method == 'POST':
         if request.form['name']:
-            editedItem.name = request.form['name']
+            editedItem.name = request.form['name'].strip()
         if request.form['description']:
-            editedItem.description = request.form['description']
+            editedItem.description = request.form['description'].strip()
         if request.form['category']:
             editedItem.course = request.form['category']
+
+        if editedItem.name == '' or editedItem.description == '':
+            flash("Please enter valid details.")
+            return redirect(request.url)
+
         session.add(editedItem)
         session.commit()
         flash('Item Successfully Edited')
         return redirect(url_for('viewCatalog'))
     else:
+        if editedItem.user.name != login_session['username']:
+            flash("You are not authorised to edit this item!")
+            return redirect('item/%s/' % item_id)
         categories = session.query(Category).order_by(asc(Category.name))
         return render_template('edititem.html',
                                item=editedItem, categories=categories)
@@ -263,6 +356,19 @@ def editItem(item_id):
 # DELETE AN ITEM
 @app.route('/item/<int:item_id>/delete/', methods=['GET', 'POST'])
 def deleteItem(item_id):
+    """
+    Deletes an existing item.
+
+    Args:
+        item_id: Unique ID of the item to be deleted.
+
+    Returns:
+        On GET: Checks if the user has authorisation to delete this item.
+        Redirects to a confirmation page or flashes an error message
+        accordingly.
+        On POST: Deletes the item from the database.
+        On either: If the user is not logged in, redirects to the main page.
+    """
     if 'username' not in login_session:
         return redirect('/')
     itemToDelete = session.query(Item).filter_by(id=item_id).one()
@@ -273,6 +379,9 @@ def deleteItem(item_id):
               % (itemToDelete.name, itemToDelete.name))
         return redirect(url_for('viewCatalog'))
     else:
+        if itemToDelete.user.name != login_session['username']:
+            flash("You are not authorised to delete this item!")
+            return redirect('item/%s/' % item_id)
         return render_template('deleteItem.html', item=itemToDelete)
 
 
@@ -282,6 +391,15 @@ def deleteItem(item_id):
 # JSON FOR CATEGORY ITEMS
 @app.route('/category/<int:category_id>/JSON')
 def categoryItemsJSON(category_id):
+    """
+    Returns the details of all items in a category as JSON
+
+    Args:
+        category_id: Unique ID of the category to be fetched.
+
+    Returns:
+        JSON object containing all items in the category.
+    """
     category = session.query(Category).filter_by(id=category_id).one()
     items = session.query(Item).filter_by(category_id=category_id).all()
     return jsonify(Items=[i.serialize for i in items])
@@ -290,6 +408,12 @@ def categoryItemsJSON(category_id):
 # JSON FOR ALL ITEMS
 @app.route('/items/JSON')
 def allItemsJSON():
+    """
+    Returns the details of all items in the database as JSON.
+
+    Returns:
+        JSON object containing all items in the database.
+    """
     items = session.query(Item).all()
     return jsonify(Items=[i.serialize for i in items])
 
@@ -297,6 +421,15 @@ def allItemsJSON():
 # JSON FOR ONE ITEMS
 @app.route('/item/<int:item_id>/JSON')
 def itemJSON(item_id):
+    """
+    Returns the details of a specific item as JSON.
+
+    Args:
+        item_id: Unique ID of the item to be fetched.
+
+    Returns:
+        JSON object containing all details of the item.
+    """
     item = session.query(Item).filter_by(id=item_id).one()
     return jsonify(item.serialize)
 

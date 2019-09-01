@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
-from flask import Flask, render_template, request, redirect, jsonify, url_for, flash
+from flask import Flask, render_template, request, \
+    redirect, jsonify, url_for, flash
 
 
 from sqlalchemy import create_engine, asc, desc
@@ -94,7 +95,8 @@ def gconnect():
     stored_access_token = login_session.get('access_token')
     stored_gplus_id = login_session.get('gplus_id')
     if stored_access_token is not None and gplus_id == stored_gplus_id:
-        response = make_response(json.dumps('Current user is already connected.'),
+        response = make_response(json.dumps(
+            'Current user is already connected.'),
                                  200)
         response.headers['Content-Type'] = 'application/json'
         return response
@@ -227,7 +229,8 @@ def newItem():
                        user_id=login_session['user_id'])
         session.add(newItem)
         session.commit()
-        flash('%s added under the %s category' % (newItem.name, newItem.category.name))
+        flash('%s added under the %s category'
+              % (newItem.name, newItem.category.name))
         return redirect(url_for('viewCatalog'))
     else:
         categories = session.query(Category).order_by(asc(Category.name))
@@ -253,7 +256,8 @@ def editItem(item_id):
         return redirect(url_for('viewCatalog'))
     else:
         categories = session.query(Category).order_by(asc(Category.name))
-        return render_template('edititem.html', item=editedItem, categories=categories)
+        return render_template('edititem.html',
+                               item=editedItem, categories=categories)
 
 
 # DELETE AN ITEM
@@ -265,7 +269,8 @@ def deleteItem(item_id):
     if request.method == 'POST':
         session.delete(itemToDelete)
         session.commit()
-        flash('%s was successfully deleted. Bye bye %s.' %(itemToDelete.name, itemToDelete.name))
+        flash('%s was successfully deleted. Bye bye %s.'
+              % (itemToDelete.name, itemToDelete.name))
         return redirect(url_for('viewCatalog'))
     else:
         return render_template('deleteItem.html', item=itemToDelete)

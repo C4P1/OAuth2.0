@@ -175,9 +175,8 @@ def gdisconnect():
 
         response = make_response(json.dumps('Successfully disconnected.'), 200)
         response.headers['Content-Type'] = 'application/json'
-        return response
+        return redirect('/')
     else:
-        # For whatever reason, the given token was invalid.
         response = make_response(
             json.dumps('Failed to revoke token for given user.', 400))
         response.headers['Content-Type'] = 'application/json'
@@ -197,7 +196,7 @@ def showMainPage():
 @app.route('/catalog/')
 def viewCatalog():
     categories = session.query(Category).order_by(asc(Category.id))
-    items = session.query(Item).order_by(desc(Item.id)).limit(10)
+    items = session.query(Item).order_by(desc(Item.id)).limit(9)
     return render_template('catalog.html', items=items, categories=categories)
 
 
@@ -285,9 +284,16 @@ def categoryItemsJSON(category_id):
 
 # JSON FOR ALL ITEMS
 @app.route('/items/JSON')
-def itemsJSON():
+def allItemsJSON():
     items = session.query(Item).all()
     return jsonify(Items=[i.serialize for i in items])
+
+
+# JSON FOR ONE ITEMS
+@app.route('/item/<int:item_id>/JSON')
+def itemJSON(item_id):
+    item = session.query(Item).filter_by(id=item_id).one()
+    return jsonify(item.serialize)
 
 
 if __name__ == '__main__':

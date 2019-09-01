@@ -1,17 +1,21 @@
 {% extends "main.html" %}
 {% block content %}
 {% include "header.html" %}
+<br>
 <h2> Are you sure you want to delete {{item.name}}? </h2>
-
+<br>
+<br>
+<br>
 <form action="#" method = 'post'>
-
+	<a href = "{{url_for('viewCatalog')}}">
 	<button type="submit" class="btn btn-default delete" id="submit" type="submit">
 	<span class="glyphicon glyphicon-trash" aria-hidden="true"></span>Delete</button>
-	<a href = '{{url_for('viewCatalog')}}'>
-		<button class="btn btn-default delete">
-		<span class="glyphicon glyphicon-remove" aria-hidden="true"></span> Cancel</button>
 	</a>
+	<a href = "{{url_for('viewCatalog')}}">
+		<div class="btn btn-default delete">
+			<span class="glyphicon glyphicon-remove" aria-hidden="true"></span>Cancel</div>
+	</a>
+	</form>
 
-</form>
 
 {% endblock %}

@@ -1,32 +1,29 @@
 {% extends "main.html" %}
 {% block content %}
 {% include "header.html" %}
-	<div class="row divider green">
-		<div class="col-md-12"></div>
-	</div>
-	<div class="row banner menu">
+	<div class="row banner item">
 		<div class="col-md-11 col-md-offset-1 padding-none">
-			<h1>Viewing {{item.name}}</h1>
+			<h1>Viewing '{{item.name}}'</h1>
 		</div>
 	</div>
 	<div class="row">
 		<div class="col-md-6 col-md-offset-1 padding-top">
-		<h2>Item Name:</h2>
-		<div class="row"> {{item.name}}</div>
+		<h2>Name:</h2>
+		<div class="row itemname"> {{item.name}}</div>
 		<h2>Description:</h2>
-		<div class="row">{{item.description}}</div>
+		<div class="row itemtext"><span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span>{{item.description}}</div>
 		
 		
 		
 	<div class="row padding-top padding-bottom">
 		<a href="{{url_for('editItem', item_id=item.id)}}">
-				<button class="btn btn-default" id="new-restaurant">
-					<span class="glyphicon glyphicon-cutlery" aria-hidden="true"></span>Edit Item
+				<button class="btn btn-default" id="edit-item">
+					<span class="glyphicon glyphicon-wrench" aria-hidden="true"></span>Edit Item
 				</button>
 		</a>
 		<a href="{{url_for('deleteItem', item_id=item.id)}}">
-				<button class="btn btn-default" id="new-restaurant">
-					<span class="glyphicon glyphicon-cutlery" aria-hidden="true"></span>Delete Item
+				<button class="btn btn-default" id="delete-item">
+					<span class="glyphicon glyphicon-trash" aria-hidden="true"></span>Delete Item
 				</button>
 		</a>
 			

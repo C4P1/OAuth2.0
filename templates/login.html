@@ -1,9 +1,12 @@
-<!DOCTYPE html>
 <html>
 <head>
 <link rel="shortcut icon" href="data:image/x-icon;," type="image/x-icon">
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
 <script src="https://apis.google.com/js/client:platform.js?onload=start" async defer></script>
+
+<link href='http://fonts.googleapis.com/css?family=Roboto:400,300,700' rel='stylesheet' type='text/css'>
+<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+<link rel=stylesheet type=text/css href="{{ url_for('static', filename='styles.css') }}">
 <script>
   function start() {
     gapi.load('auth2', function() {
@@ -13,38 +16,45 @@
     });
   }
 </script>
-
-
 </head>
 
+<body>
+<div class="container">
+	
+	<div class="row">
+		<div class="resultRow">
+			<div id="result"></div>
+		</div>
+	</div>
+	
+	<div class="row">
+		<div class="mainpageRow">
+			<div class="col-md-3"></div>
+			<div class="col-md-3">
+			<button class="mainpageButton" id="signinButton">Log In</button>
+					<div id="signinButton">
+							<span class="g-signin"
+								data-scope="openid email"
+								data-clientid="402191942566-qdkhe0isrn4g2kqcvkrbia610tg5i7og.apps.googleusercontent.com"
+								data-redirecturi="postmessage"
+								data-accesstype="offline"
+								data-cookiepolicy="single_host_origin"
+								data-callback="signInCallback"
+								data-approvalprompt="force">
+							</span>
+					</div>
+			</div>
+			
+			<div class="col-md-3">
+				<a href="{{url_for('viewCatalog')}}">
+					<button class="mainpageButton">View Catalog</button>
+				</a>
+			</div>
+			<div class="col-md-3"></div>
+		</div>
+	</div>
 
-<body>  
-
-
-<!-- GOOGLE SIGN IN BUTTON-->
-<button class="mainpageButton" id="signinButton">Log In</button>
-<div id="result"></div>
-
-          
-          <div id="signinButton">
-          <span class="g-signin"
-            data-scope="openid email"
-            data-clientid="402191942566-qdkhe0isrn4g2kqcvkrbia610tg5i7og.apps.googleusercontent.com"
-            data-redirecturi="postmessage"
-            data-accesstype="offline"
-            data-cookiepolicy="single_host_origin"
-            data-callback="signInCallback"
-            data-approvalprompt="force">
-          </span>
-        </div>
-<!--END GOOGLE PLUS SIGN IN BUTTON -->
-
-<a href="{{url_for('viewCatalog')}}">
-				<button class="mainpageButton" id="catalogButton">View Catalog</button>
-					<span class="glyphicon glyphicon-glass" aria-hidden="true"></span>
-				</button>
-			</a>
-
+</div>
 
 <script>
   $('#signinButton').click(function() {
@@ -62,7 +72,7 @@
             $('#result').html('Login Successful!</br>'+ result + '</br>Redirecting...')
                  setTimeout(function() {
                   window.location.href = "/catalog/";
-                 }, 3000);
+                 }, 2000);
           },
           processData:false,
           data:authResult['code']
@@ -76,7 +86,5 @@
     auth2.grantOfflineAccess().then(signInCallback);
   });
 </script>
-
-  </body>
-
-  </html>
+</body>
+</html>

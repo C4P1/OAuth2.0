@@ -1,60 +1,89 @@
-# OAuth2.0
-Starter Code for Auth&amp;Auth course
-# Installing the Vagrant VM for ud330 - Authentication & Authorization
+# Item Catalog Project
 
-**Note: If you already have a vagrant machine installed from previous Udacity courses skip to the 'Fetch the Source Code and VM Configuration' section**
+## Table of Contents
 
-In Lessons 2,3 and 4 of this course, you'll use a virtual machine (VM) to run a web server and a web app that uses it. The VM is a Linux system that runs on top of your own machine.  You can share files easily between your computer and the VM.
+- [Table of Contents](#table-of-contents)
+- [Intro](#intro)
+- [Installation](#installation)
+- [Instructions](#instructions)
 
-We're using the Vagrant software to configure and manage the VM. Here are the tools you'll need to install to get it running:
 
-### Git
+## Intro
 
-If you don't already have Git installed, [download Git from git-scm.com.](http://git-scm.com/downloads) Install the version for your operating system.
+This readme provides information on the expected and proper functionality of the included python project.
 
-On Windows, Git will provide you with a Unix-style terminal and shell (Git Bash).  
-(On Mac or Linux systems you can use the regular terminal program.)
 
-You will need Git to install the configuration for the VM. If you'd like to learn more about Git, [take a look at our course about Git and Github](http://www.udacity.com/course/ud775).
+## Installation
 
-### VirtualBox
+This segment goes through all the software and dependencies necessary before the program can be run.
 
-VirtualBox is the software that actually runs the VM. [You can download it from virtualbox.org, here.](https://www.virtualbox.org/wiki/Downloads)  Install the *platform package* for your operating system.  You do not need the extension pack or the SDK. You do not need to launch VirtualBox after installing it.
+### Install Python Version 3
 
-**Ubuntu 14.04 Note:** If you are running Ubuntu 14.04, install VirtualBox using the Ubuntu Software Center, not the virtualbox.org web site. Due to a [reported bug](http://ubuntuforums.org/showthread.php?t=2227131), installing VirtualBox from the site may uninstall other software you need.
+Python is the programming language the actual code is written in. It needs to be installed on your host machine.
+[Download Python 3](https://www.python.org/downloads/) for the host OS using the link. Make sure the version of python is 
+1. Above Python 3.0.0
+2. Appropriate for your OS
 
-### Vagrant
+### Install Vagrant
 
-Vagrant is the software that configures the VM and lets you share files between your host computer and the VM's filesystem.  [You can download it from vagrantup.com.](https://www.vagrantup.com/downloads) Install the version for your operating system.
+Vagrant is the software that configures the VM and lets you share files between your host computer and the VM's filesystem.
+[Download it from vagrantup.com.](https://www.vagrantup.com/downloads.html) Install the version for your operating system.
 
-**Windows Note:** The Installer may ask you to grant network permissions to Vagrant or make a firewall exception. Be sure to allow this.
+**Windows users:** The Installer may ask you to grant network permissions to Vagrant or make a firewall exception. Be sure to allow this.
 
-## Fetch the Source Code and VM Configuration
+### Install VirtualBox
+
+VirtualBox is the software that actually runs the virtual machine.
+[You can download it from virtualbox.org, here.](https://www.virtualbox.org/wiki/Download_Old_Builds_5_1)
+Install the _platform package_ for your operating system. You do not need the extension pack or the SDK.
+You do not need to launch VirtualBox yourself. Vagrant will handle that.
+
+**Note:** From the Vagrant website, as of July 2019,
+The VirtualBox provider is compatible with VirtualBox versions 4.0.x, 4.1.x, 4.2.x, 4.3.x, 5.0.x, 5.1.x, 5.2.x, and 6.0.x. Other versions are unsupported and the provider will display an error message. Please note that beta and pre-release versions of VirtualBox are not supported and may not be well-behaved.
+
+**Ubuntu users:** If you are running Ubuntu 14.04, install VirtualBox using the Ubuntu Software Center instead. Due to a reported bug, installing VirtualBox from the site may uninstall other software you need.
+
+To be safe, it is recommended to download VirtualBox 5.1 from the link above, as it is has been tested and confirmed compatible.
+
+### Download the VM configuration
 
 **Windows:** Use the Git Bash program (installed with Git) to get a Unix-style terminal.  
 **Other systems:** Use your favorite terminal program.
 
-From the terminal, run:
+Unzip the provided zip file to any directory.
 
-    git clone https://github.com/udacity/OAuth2.0 oauth
-
-This will give you a directory named **oauth** complete with the source code for the flask application, a vagrantfile, and a bootstrap.sh file for installing all of the necessary tools. 
-
-## Run the virtual machine!
-
-Using the terminal, change directory to oauth (**cd oauth**), then type **vagrant up** to launch your virtual machine.
+This will give you a directory, complete with the source code for the flask application, a vagrantfile, and a bootstrap.sh file for installing all of the necessary tools. 
 
 
-## Running the Restaurant Menu App
-Once it is up and running, type **vagrant ssh**. This will log your terminal into the virtual machine, and you'll get a Linux shell prompt. When you want to log out, type **exit** at the shell prompt.  To turn the virtual machine off (without deleting anything), type **vagrant halt**. If you do this, you'll need to run **vagrant up** again before you can log into it.
 
 
-Now that you have Vagrant up and running type **vagrant ssh** to log into your VM.  change to the /vagrant directory by typing **cd /vagrant**. This will take you to the shared folder between your virtual machine and host machine.
+## Instructions
 
-Type **ls** to ensure that you are inside the directory that contains project.py, database_setup.py, and two directories named 'templates' and 'static'
+### Set up the virtual environment
 
-Now type **python database_setup.py** to initialize the database.
+Install the required software as mentioned above. Restart your PC if asked, then proceed.
+1. Move into the **vagrant** directory using the terminal. Then type 'vagrant up' in the terminal. This causes Vagrant to download and install the virtual OS. Feel free to go have a coffee because this could take a while (several minutes).
+2. Once the installation finishes and you have control of the terminal again, run 'vagrant ssh' to log in to the new virtual machine.
+	If your terminal prompt now starts with the word 'vagrant'. Congratulations, the log in was successful.	
+3. Inside the VM, cd to '/vagrant' and ensure that the files present in the VM (use ls) are the same as the ones in your host machines **vagrant** folder.
 
-Type **python lotsofmenus.py** to populate the database with restaurants and menu items. (Optional)
 
-Type **python project.py** to run the Flask web server. In your browser visit **http://localhost:5000** to view the restaurant menu app.  You should be able to view, add, edit, and delete menu items and restaurants.
+### Set up the data
+
+1. (Within vagrant itself) Run database_setup.py.
+2. (Optional) Once it finishes, run item_database.py to populate the database.
+
+
+### Run the project
+
+1. In the virtual machine terminal, cd to the correct folder, where the project.py file is placed.
+2. Run 'python project.py' to run the program.
+3. On a javascript enabled browser (All testing was done on Google Chrome). Go to localhost:5000. From here, please proceed to use the application as you see fit.
+
+
+### Getting the endpoints
+
+This application provides 3 JSON endpoints. They are:
+1. localhost:5000/items/JSON	- To get all items in the database.
+2. localhost:5000//category/<int:category_id>/JSON	- To get all items in the database that belong to a specific category.
+3. localhost:5000/item/<int:item_id>/JSON	- To get details on one particular item.

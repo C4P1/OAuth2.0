@@ -10,6 +10,10 @@ DBSession = sessionmaker(bind=engine)
 session = DBSession()
 
 
+User1 = User(name="Paul Bunyan", email="paul@ocanada.com")
+session.add(User1)
+session.commit()
+
 category1 = Category(name="Dogs")
 
 session.add(category1)
